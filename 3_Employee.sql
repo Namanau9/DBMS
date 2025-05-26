@@ -152,3 +152,50 @@ INSERT INTO WORKS_ON (SSN, PNO, HOURS) VALUES (678912345, 44, 20);
 INSERT INTO WORKS_ON (SSN, PNO, HOURS) VALUES (345678912, 55, 50);
 INSERT INTO WORKS_ON (SSN, PNO, HOURS) VALUES (456789123, 66, 60);
 INSERT INTO WORKS_ON (SSN, PNO, HOURS) VALUES (345678912, 77, 60);
+
+--a. Convert employee name into uppercase whenever a record is inserted or updated:
+
+CREATE TRIGGER EMPLOYEE_NAME_UPPER
+BEFORE INSERT OR UPDATE ON EMPLOYEE
+FOR EACH ROW
+BEGIN
+    :NEW.Name := UPPER(:NEW.Name);
+END;
+
+--b. Make a list of all project numbers for projects involving an employee named 'Scott':
+
+SELECT DISTINCT P.PNO
+FROM PROJECT P, DEPARTMENT D, EMPLOYEE E
+WHERE E.NAME = 'Scott' AND E.SSN = D.MGRSSN AND D.DNO = P.DNO
+
+UNION
+
+SELECT DISTINCT P.PNO
+FROM PROJECT P, WORKS_ON W, EMPLOYEE E
+WHERE E.NAME = 'Scott' AND E.SSN = W.SSN AND P.PNO = W.PNO;
+
+--c. Show the resulting salaries if every employee working on the ‘IoT’ project is given a 10% raise:
+
+SELECT E.Name, 1.1 * E.Salary AS Hike_Salary
+FROM Employee E, Works_On W, Project P
+WHERE E.SSN = W.SSN AND W.PNO = P.PNO AND P.PName = 'IOT';
+
+-- d. Find the sum of the salaries of all employees of the ‘Accounts’ department, as well as the maximum, minimum, and average salary in this department:
+
+SELECT SUM(E.Salary), MAX(E.Salary), MIN(E.Salary), AVG(E.Salary)
+FROM Employee E, Department D
+WHERE E.DNO = D.DNO AND D.DName = 'ACCOUNTS';
+
+--e. Retrieve the name of each employee who works on all the projects controlled by department number 5 (using NOT EXISTS):
+
+SELECT E.Name 
+FROM Employee E
+WHERE NOT EXISTS (
+    (SELECT P.PNO 
+     FROM Project P 
+     WHERE P.DNO = 5)
+    MINUS
+    (SELECT W.PNO 
+     FROM Works_On W 
+     WHERE E.SSN = W.SSN)
+);
